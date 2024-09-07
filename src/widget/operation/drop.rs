@@ -1,3 +1,5 @@
+use std::marker::Send;
+
 use iced::{
     advanced::widget::{
         operation::{Outcome, Scrollable},
@@ -17,7 +19,7 @@ pub fn find_zones<F>(
     depth: Option<usize>,
 ) -> impl Operation<Vec<(Id, Rectangle)>>
 where
-    F: Fn(&Rectangle) -> bool + 'static,
+    F: Fn(&Rectangle) -> bool + 'static + Send,
 {
     struct FindDropZone<F> {
         filter: F,
@@ -30,7 +32,7 @@ where
 
     impl<F> Operation<Vec<(Id, Rectangle)>> for FindDropZone<F>
     where
-        F: Fn(&Rectangle) -> bool + 'static,
+        F: Fn(&Rectangle) -> bool + 'static + Send,
     {
         fn container(
             &mut self,
