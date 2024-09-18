@@ -72,6 +72,7 @@ where
             _state: &mut dyn Scrollable,
             _id: Option<&Id>,
             bounds: Rectangle,
+            _content_bounds: Rectangle,
             translation: Vector,
         ) {
             if (self.filter)(&bounds) {
