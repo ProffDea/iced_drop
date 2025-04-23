@@ -4,7 +4,6 @@ use std::vec;
 
 use iced::advanced::widget::{Operation, Tree, Widget};
 use iced::advanced::{self, layout, mouse, overlay, renderer, Layout};
-use iced::event::Status;
 use iced::{Element, Point, Rectangle, Size, Vector};
 
 /// An element that can be dragged and dropped on a [`DropZone`]
@@ -159,21 +158,21 @@ where
         self.content.as_widget().size()
     }
 
-    fn on_event(
+    fn update(
         &mut self,
         tree: &mut iced::advanced::widget::Tree,
-        event: iced::Event,
+        event: &iced::Event,
         layout: iced::advanced::Layout<'_>,
         cursor: iced::advanced::mouse::Cursor,
         _renderer: &Renderer,
         _clipboard: &mut dyn iced::advanced::Clipboard,
         shell: &mut iced::advanced::Shell<'_, Message>,
         _viewport: &iced::Rectangle,
-    ) -> iced::advanced::graphics::core::event::Status {
+    ) {
         // handle the on event of the content first, in case that the droppable is nested
-        let status = self.content.as_widget_mut().on_event(
+        self.content.as_widget_mut().update(
             &mut tree.children[0],
-            event.clone(),
+            event,
             layout,
             cursor,
             _renderer,
@@ -183,16 +182,16 @@ where
         );
         // this should really only be captured if the droppable is nested or it contains some other
         // widget that captures the event
-        if status == Status::Captured {
-            return status;
-        };
+        if shell.is_event_captured() {
+            return shell.request_redraw();
+        }
 
         if let Some(on_drop) = self.on_drop.as_deref() {
             let state = tree.state.downcast_mut::<State>();
             if let iced::Event::Mouse(mouse) = event {
                 match mouse {
                     mouse::Event::ButtonPressed(btn) => {
-                        if btn == mouse::Button::Left && cursor.is_over(layout.bounds()) {
+                        if *btn == mouse::Button::Left && cursor.is_over(layout.bounds()) {
                             // select the droppable and store the position of the widget before dragging
                             state.action = Action::Select(cursor.position().unwrap());
                             let bounds = layout.bounds();
@@ -203,8 +202,8 @@ where
                             if let Some(on_click) = self.on_click.clone() {
                                 shell.publish(on_click);
                             }
-                            return Status::Captured;
-                        } else if btn == mouse::Button::Right {
+                            shell.capture_event();
+                        } else if *btn == mouse::Button::Right {
                             if let Action::Drag(_, _) = state.action {
                                 shell.invalidate_layout();
                                 state.action = Action::None;
@@ -241,11 +240,12 @@ where
                                 let message = (on_drag)(position, state.overlay_bounds);
                                 shell.publish(message);
                             }
+                            shell.request_redraw();
                         }
                         _ => (),
                     },
                     mouse::Event::ButtonReleased(btn) => {
-                        if btn == mouse::Button::Left {
+                        if *btn == mouse::Button::Left {
                             match state.action {
                                 Action::Select(_) => {
                                     state.action = Action::None;
@@ -269,8 +269,11 @@ where
                 }
             }
         }
-        Status::Ignored
-    }
+
+        if cursor.is_over(layout.bounds()) {
+            shell.request_redraw();
+        }
+    }   
 
     fn layout(
         &self,
@@ -320,7 +323,7 @@ where
         operation: &mut dyn Operation,
     ) {
         let state = tree.state.downcast_mut::<State>();
-        operation.custom(state, self.id.as_ref());
+        operation.custom(self.id.as_ref(), layout.bounds(), state);
         operation.container(self.id.as_ref(), layout.bounds(), &mut |operation| {
             self.content
                 .as_widget()

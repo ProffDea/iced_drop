@@ -67,11 +67,11 @@ where
 
         fn scrollable(
             &mut self,
-            _state: &mut dyn Scrollable,
             _id: Option<&Id>,
             bounds: Rectangle,
             _content_bounds: Rectangle,
             translation: Vector,
+            _state: &mut dyn Scrollable,
         ) {
             if (self.filter)(&bounds) {
                 self.offset = self.offset + translation;

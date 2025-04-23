@@ -1,6 +1,3 @@
-#![feature(get_many_mut)]
-#![feature(hash_raw_entry)]
-
 use std::time::Instant;
 
 use highlight::{should_update_droppable, zone_update, Highlight, Highlightable, ZoneUpdate};
