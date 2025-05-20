@@ -362,8 +362,9 @@ where
     fn overlay<'b>(
         &'b mut self,
         tree: &'b mut Tree,
-        layout: Layout<'_>,
+        layout: Layout<'b>,
         renderer: &Renderer,
+        _viewport: &Rectangle,
         _translation: Vector,
     ) -> Option<overlay::Element<'b, Message, Theme, Renderer>> {
         let state: &mut State = tree.state.downcast_mut::<State>();
@@ -381,6 +382,7 @@ where
             children.next().unwrap(),
             layout,
             renderer,
+            _viewport,
             _translation,
         )
     }
@@ -494,9 +496,5 @@ where
             cursor_position,
             &Rectangle::with_size(Size::INFINITY),
         );
-    }
-
-    fn is_over(&self, _layout: Layout<'_>, _renderer: &Renderer, _cursor_position: Point) -> bool {
-        false
     }
 }
